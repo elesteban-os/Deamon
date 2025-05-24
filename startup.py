@@ -2,15 +2,12 @@
 import os
 import notification
 
-def add_to_startup():
-    # Ruta del script actual
-    script_path = os.path.abspath(__file__)
-
+def add_to_startup(script_path):
     # Ruta de la carpeta autostart para configurar que el script se ejecute al inicio
     autostart_dir = os.path.expanduser("~/.config/autostart")
 
     # Ruta del archivo .desktop donde se guardará la configuración para el inicio automático
-    autostart_file = os.path.join(autostart_dir, "notification1.desktop")
+    autostart_file = os.path.join(autostart_dir, "fans_notification.desktop")
 
     # Crear la carpeta autostart si no existe
     os.makedirs(autostart_dir, exist_ok=True)

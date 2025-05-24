@@ -2,11 +2,12 @@
 from plyer import notification
 
 # Crear una notificación de sistema
-def notify(title, message):
+def notify(title, message, app_icon=None):
     notification.notify(
         title=title,
         message=message,
         app_name='My Application',
+        app_icon=app_icon,  # Puedes especificar un icono si lo deseas
         timeout=5  # Duración de la notificación en segundos
     )
 
