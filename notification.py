@@ -1,5 +1,5 @@
 
-from plyer import notification
+from plyer import notification # pip install plyer
 
 # Crear una notificación de sistema
 def notify(title, message, app_icon=None):
