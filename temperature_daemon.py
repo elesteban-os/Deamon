@@ -1,12 +1,26 @@
-#!/usr/bin/env python3
+
 import os
 import sys
 import time
 import signal
 import logging
 from logging.handlers import RotatingFileHandler
-import psutil
-#import notification
+import subprocess
+import re
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
+icon_path = os.path.join(script_dir, "of.png")
+
+def get_cpu_temperature():
+        try:
+            output = subprocess.check_output("sensors", text=True)
+            match = re.search(r'k10temp.*?\n.*?Tctl:\s+\+([0-9.]+)°C', output, re.DOTALL)
+            if match:
+                return float(match.group(1))
+        except Exception as e:
+            print(f"Error obteniendo temperatura: {e}")
+        return 0.0
+
 
 class TemperatureDaemon:
     def __init__(self, pidfile, logfile, threshold=65, interval=5):
@@ -78,31 +92,21 @@ class TemperatureDaemon:
         self.logger.info(f'Received signal {signum}, shutting down...')
         self.running = False
     
-    def get_cpu_temperature(self):
-        """Read CPU temperature"""
-        try:
-            temps = psutil.sensors_temperatures()
-            if 'coretemp' in temps:
-                return temps['coretemp'][0].current
-            return 0  # Valor por defecto si no se puede leer
-        except (AttributeError):
-            self.logger.error("Could not read CPU temperature")
-            return 0
-    
     def run(self):
         """Main daemon loop"""
         self.running = True
         self.logger.info("Daemon started")
         
         while self.running:
-            temp = self.get_cpu_temperature()
+            temp = get_cpu_temperature()
             self.logger.info(f"CPU Temperature: {temp}°C")
             
             if temp > self.threshold:
                 self.logger.warning(f"Temperature threshold exceeded: {temp}°C > {self.threshold}°C")
                 try:
-                    #notification.notify()
-                    print("se exedio xd")
+                    #notification.notify("Only-Fans Daemon", "El daemon para los ventiladores se encuentra en ejecución.", app_icon=icon_path)
+                    play_beep()
+                    print("se ha exedido el umbral de temperatura")
                 except Exception as e:
                     self.logger.error(f"Failed to send notification: {e}")
             
@@ -153,8 +157,15 @@ class TemperatureDaemon:
         time.sleep(1)
         self.start()
 
+def play_beep():
+    beep_path = os.path.join(script_dir, "beep.wav")
+    os.system(f'aplay {beep_path}')
+
+
 if __name__ == '__main__':
-    # Configuración (puedes modificar estos valores)
+    
+    play_beep()
+    # notification.notify("Only-Fans Daemon", "El daemon para los ventiladores se encuentra en ejecución.", app_icon=icon_path)    # Configuración (puedes modificar estos valores)
     PID_FILE = '/var/run/temperature_daemon.pid'
     LOG_FILE = '/var/log/temperature_daemon.log'
     THRESHOLD = 65  # °C
@@ -175,4 +186,3 @@ if __name__ == '__main__':
         sys.exit(0)
     else:
         print("Usage: temperature_daemon.py start|stop|restart")
-        sys.exit(2)
