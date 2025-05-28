@@ -1,12 +1,13 @@
-
-import os
 import sys
 import time
 import signal
 import logging
 from logging.handlers import RotatingFileHandler
 import subprocess
+import os
 import re
+
+import notification # notification.py
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 icon_path = os.path.join(script_dir, "of.png")
@@ -30,7 +31,7 @@ class TemperatureDaemon:
         self.interval = interval
         self.running = False
         
-        # Configurar logging
+        # Configure logging
         self.logger = logging.getLogger('TemperatureDaemon')
         self.logger.setLevel(logging.INFO)
         handler = RotatingFileHandler(
@@ -43,7 +44,7 @@ class TemperatureDaemon:
         self.logger.addHandler(handler)
         
     def daemonize(self):
-        """Double fork magic to create a daemon"""
+        # Double fork magic to create a daemon
         try:
             pid = os.fork()
             if pid > 0:
@@ -88,12 +89,12 @@ class TemperatureDaemon:
         signal.signal(signal.SIGINT, self.handle_signal)
     
     def handle_signal(self, signum, frame):
-        """Handle signals like SIGTERM and SIGINT"""
+        # Handle signals like SIGTERM and SIGINT
         self.logger.info(f'Received signal {signum}, shutting down...')
         self.running = False
     
     def run(self):
-        """Main daemon loop"""
+        # Main daemon loop
         self.running = True
         self.logger.info("Daemon started")
         
@@ -104,9 +105,9 @@ class TemperatureDaemon:
             if temp > self.threshold:
                 self.logger.warning(f"Temperature threshold exceeded: {temp}°C > {self.threshold}°C")
                 try:
-                    #notification.notify("Only-Fans Daemon", "El daemon para los ventiladores se encuentra en ejecución.", app_icon=icon_path)
+                    notification.notify("OF Daemon", "WARNING: Temperature threshold exceeded", app_icon=icon_path)
                     play_beep()
-                    print("se ha exedido el umbral de temperatura")
+                    print("Temperature threshold exceeded, notification sent.")
                 except Exception as e:
                     self.logger.error(f"Failed to send notification: {e}")
             
@@ -116,7 +117,7 @@ class TemperatureDaemon:
         os.remove(self.pidfile)
     
     def start(self):
-        """Start the daemon"""
+        # Start the daemon
         # Check if pidfile exists
         if os.path.exists(self.pidfile):
             with open(self.pidfile, 'r') as f:
@@ -136,7 +137,7 @@ class TemperatureDaemon:
         self.run()
     
     def stop(self):
-        """Stop the daemon"""
+        # Stop the daemon
         if not os.path.exists(self.pidfile):
             print("Daemon not running")
             return
@@ -152,9 +153,9 @@ class TemperatureDaemon:
                 os.remove(self.pidfile)
     
     def restart(self):
-        """Restart the daemon"""
+        # Restart the daemon
         self.stop()
-        time.sleep(1)
+        time.sleep(5)
         self.start()
 
 def play_beep():
@@ -163,11 +164,9 @@ def play_beep():
 
 
 if __name__ == '__main__':
-    
-    play_beep()
-    # notification.notify("Only-Fans Daemon", "El daemon para los ventiladores se encuentra en ejecución.", app_icon=icon_path)    # Configuración (puedes modificar estos valores)
-    PID_FILE = '/var/run/temperature_daemon.pid'
-    LOG_FILE = '/var/log/temperature_daemon.log'
+    PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
+    PID_FILE = os.path.join(PROJECT_DIR, 'temperature_daemon.pid')
+    LOG_FILE = os.path.join(PROJECT_DIR, 'temperature_daemon.log')
     THRESHOLD = 65  # °C
     INTERVAL = 5    # segundos
     
